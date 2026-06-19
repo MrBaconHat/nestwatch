@@ -17,36 +17,48 @@ class JSONWatcher:
             data = json.load(f)
 
             # Compare the difference
-            diff = self._diff(data, main=True)
+            added, removed, changed = self._diff(
+                self.data or {},
+                data
+            )
             self.data = data
 
             if callable(self.callback):
-                await self.callback(diff)
+                await self.callback(added, removed, changed)
 
-    def _diff(self, data, main=True) -> dict:
+    def _diff(self, old, new):
         # Recursive function to find the difference between the old and new data
-        # and then return the difference in the following format: e.g: {"old": {"key": "value"}, "new": {"key": "value"}}
-        diff = {}
-        if isinstance(data, dict):
-            for key in data:
-                if self.data is None or key not in self.data:
-                    diff[key] = {"old": None, "new": data[key]}
+        # and then return the difference in the following format: {"added": {"key": "value"}, "removed": {"key": "value"}, "changed": {"key": {"old": "value", "new": "value"}}}
 
-                elif isinstance(data[key], dict):
-                    diff[key] = self._diff(data[key], main=False)
-                    
-                elif data[key] != self.data.get(key):
-                    diff[key] = self.data.get(key)
+        added = {}
+        removed = {}
+        changed = {}
+        
+        all_keys = set(old) | set(new)
+        for key in all_keys:
+            if key not in old:
+                added[key] = new[key]
+
+            elif key not in new:
+                removed[key] = old[key]
+
+            elif old[key] != new[key]:
+                if isinstance(old[key], dict) and isinstance(new[key], dict):
+                    nested_added, nested_removed, nested_changed = self._diff(old[key], new[key])
+
+                    changed[key] = {
+                        "added": nested_added,
+                        "removed": nested_removed,
+                        "changed": nested_changed
+                    }
+
+                else:
+                    changed[key] = {"old": old[key], "new": new[key]}
 
 
-        if main:
-            new_diff = {"old": {}, "new": {}}
-            for key in diff:
-                new_diff["old"][key] = self.data.get(key)
-                new_diff["new"][key] = data.get(key)
-                return new_diff
-
-        return diff
+        return added, removed, changed
+        
+        
 
     def on_change(self, func):
         """
