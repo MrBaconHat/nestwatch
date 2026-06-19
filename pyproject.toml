@@ -1,6 +1,6 @@
 [project]
 name = "nestwatch"
-description = "A simple file watcher for JSON files."
+description = "A simple file watcher for JSON files.."
 version = "0.0.2"
 requires-python = ">=3.10"
 
