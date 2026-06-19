@@ -19,12 +19,9 @@ class FileSystemObserver(FileSystemEventHandler):
         self.last_called = time.time()
             
         if event.is_directory:
-            print("Directory modified")
-            print(event.src_path)
             return
             
         elif event.src_path == self.file_path:
-            print("its a file!")
             asyncio.run_coroutine_threadsafe(self.callback(), loop=self.loop)
 
     async def start(self):

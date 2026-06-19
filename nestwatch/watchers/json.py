@@ -13,7 +13,6 @@ class JSONWatcher:
         self.data = None
 
     async def _on_modified(self):
-        print("File modified")
         with open(self.file_path, "r") as f:
             data = json.load(f)
 
@@ -64,5 +63,4 @@ class JSONWatcher:
         with open(self.file_path, "r") as f:
             self.data = json.load(f)
 
-        print("Starting watcher")
         await self.observer.start()
