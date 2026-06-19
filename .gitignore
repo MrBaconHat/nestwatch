@@ -4,3 +4,5 @@ test.py
 test.json
 main.py
 uv.lock
+
+nestwatch.egg-info/
