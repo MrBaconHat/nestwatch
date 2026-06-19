@@ -26,34 +26,34 @@ class JSONWatcher:
             if callable(self.callback):
                 await self.callback(added, removed, changed)
 
-    def _diff(self, old, new):
-        # Recursive function to find the difference between the old and new data
-        # and then return the difference in the following format: {"added": {"key": "value"}, "removed": {"key": "value"}, "changed": {"key": {"old": "value", "new": "value"}}}
-
+    def _diff(self, old, new, path=None):
         added = {}
         removed = {}
         changed = {}
+
+        path = path
         
-        all_keys = set(old) | set(new)
+        all_keys = set(old or {}) | set(new or {})
         for key in all_keys:
+            current_path = f"{path}.{key}" if path else key
+
             if key not in old:
-                added[key] = new[key]
+                added[current_path] = new[key]
 
             elif key not in new:
-                removed[key] = old[key]
+                removed[current_path] = old[key]
+
+            elif isinstance(old[key], dict) and isinstance(new[key], dict):
+                added_, removed_, changed_ = self._diff(old[key], new[key], current_path)
+                added.update(added_)
+                removed.update(removed_)
+                changed.update(changed_)
 
             elif old[key] != new[key]:
-                if isinstance(old[key], dict) and isinstance(new[key], dict):
-                    nested_added, nested_removed, nested_changed = self._diff(old[key], new[key])
-
-                    changed[key] = {
-                        "added": nested_added,
-                        "removed": nested_removed,
-                        "changed": nested_changed
-                    }
-
-                else:
-                    changed[key] = {"old": old[key], "new": new[key]}
+                changed[current_path] = {
+                    "old": old[key],
+                    "new": new[key]
+                }
 
 
         return added, removed, changed
