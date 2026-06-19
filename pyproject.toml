@@ -1,3 +1,8 @@
 [project]
 name = "nestwatch"
-version = "0.0.1"
+descrption = "A simple file watcher for JSON files."
+version = "0.0.2"
+
+dependencies = [
+    "watchdog>=6.0.0"
+]
