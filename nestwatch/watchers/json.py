@@ -1,5 +1,8 @@
 from ..core import FileSystemObserver
 
+# --- Instances ---------------------
+from ..core.events import Event
+
 import json
 
 from typing import Callable
@@ -13,18 +16,28 @@ class JSONWatcher:
         self.data = None
 
     async def _on_modified(self):
+        old = self.data
         with open(self.file_path, "r") as f:
-            data = json.load(f)
+            new_data = json.load(f)
 
             # Compare the difference
             added, removed, changed = self._diff(
                 self.data or {},
-                data
+                new_data
             )
-            self.data = data
+            self.data = new_data
+            
 
             if callable(self.callback):
-                await self.callback(added, removed, changed)
+                await self.callback(
+                    Event(
+                        added,
+                        removed,
+                        changed,
+                        old,
+                        new_data
+                    )
+                )
 
     def _diff(self, old, new, path=None):
         added = {}
@@ -76,3 +89,9 @@ class JSONWatcher:
             self.data = json.load(f)
 
         await self.observer.start()
+
+    async def stop(self):
+        """
+        Stops the watcher.
+        """
+        await self.observer.stop()
