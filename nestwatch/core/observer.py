@@ -25,8 +25,7 @@ class FileSystemObserver(FileSystemEventHandler):
         if event.is_directory:
             return
             
-        if not Path(event.src_path) != self.file_path:
-            return
+        if Path(event.src_path) == self.file_path:
             asyncio.run_coroutine_threadsafe(self.callback(), loop=self.loop)
 
     def on_modified(self, event):
