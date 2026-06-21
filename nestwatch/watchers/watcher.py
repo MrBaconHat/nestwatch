@@ -4,6 +4,8 @@ from ..core import FileSystemObserver
 from ..core.events import Event
 
 import json
+import asyncio
+import traceback
 
 from typing import Callable
 
@@ -21,9 +23,23 @@ class Watcher:
             f"Please implement the `serialize` method in the {self.__class__.__name__} class."
         )
 
+    async def _call_serialize(self):
+        if asyncio.iscoroutinefunction(self._serialize):
+            return await self._serialize()
+
+        return self._serialize()
+
     async def _on_modified(self):
         old = self.data or {}
-        new = self._serialize()
+        new = None
+        try:
+            new = await self._call_serialize()
+            
+        except Exception as e:
+            traceback.print_exception(
+                type(e), e, e.__traceback__
+            )
+            return
 
         added, removed, changed = self._diff(old, new)
         self.data = new
@@ -46,6 +62,7 @@ class Watcher:
         path = path
         
         all_keys = set(old or {}) | set(new or {})
+            
         for key in all_keys:
             current_path = f"{path}.{key}" if path else key
 
@@ -61,6 +78,15 @@ class Watcher:
                 removed.update(removed_)
                 changed.update(changed_)
 
+            elif isinstance(old[key], list) and isinstance(new[key], list):
+                if len(old[key]) != len(new[key]):
+                    changed[current_path] = {"old": old[key], "new": new[key]}
+
+                else:
+                    for i, (old_item, new_item) in enumerate(zip(old[key], new[key])):
+                        if old_item != new_item:
+                            changed[f"{current_path}[{i}]"] = {"old": old_item, "new": new_item}
+
             elif old[key] != new[key]:
                 changed[current_path] = {
                     "old": old[key],
@@ -69,8 +95,7 @@ class Watcher:
 
 
         return added, removed, changed
-        
-        
+         
 
     def on_change(self, func):
         """
@@ -84,7 +109,7 @@ class Watcher:
         """
 
         # Up-to-date the cache before starting
-        self.data = self._serialize()
+        self.data = await self._call_serialize()
 
         await self.observer.start()
 
