@@ -82,46 +82,93 @@ class ConfigCache:
 
 # Event Object
 
-NestWatch emits an "Event" object containing:
+NestWatch emits an `Event` object containing:
 
-Property| Description
-"event.added"| Newly added keys
-"event.removed"| Removed keys
-"event.changed"| Modified values
-"event.old_state"| Previous file state
-"event.new_state"| Updated file state
+| Property | Description |
+|----------|-------------|
+| `event.added` | Newly added keys |
+| `event.removed` | Removed keys |
+| `event.changed` | Modified values |
+| `event.old_state` | Previous file state |
+| `event.new_state` | Updated file state |
 
-Example
+## Event Examples
 
-Suppose:
+Suppose this file:
+
 ```json
 {
-    "BOT_STATUS": {
-        "presence": "online"
-    }
+  "BOT_STATUS": {
+    "presence": "online"
+  }
 }
 ```
 
 becomes:
+
 ```json
 {
-    "BOT_STATUS": {
-        "presence": "idle"
-    }
+  "BOT_STATUS": {
+    "presence": "idle",
+    "custom": "Watching NestWatch 👀"
+  },
+
+  "API": {
+    "enabled": true
+  }
 }
 ```
 
 Then:
 
-event.changed
+### `event.added`
 
-returns:
-```json
+```python
 {
-    "BOT_STATUS.presence": {
-        "old": "online",
-        "new": "idle"
-    }
+    "BOT_STATUS.custom": "Watching NestWatch 👀"
+    "API.enabled": True
+}
+```
+
+### `event.removed`
+
+```python
+{}
+```
+
+### `event.changed`
+
+```python
+{
+  "BOT_STATUS.presence": {
+    "old": "online",
+    "new": "idle"
+  }
+}
+```
+
+### `event.old_state`
+
+```python
+{
+  "BOT_STATUS": {
+    "presence": "online"
+  }
+}
+```
+
+### `event.new_state`
+
+```python
+{
+  "BOT_STATUS": {
+    "presence": "idle",
+    "custom": "Watching NestWatch 👀"
+  },
+
+  "API": {
+    "enabled": true
+  }
 }
 ```
 
