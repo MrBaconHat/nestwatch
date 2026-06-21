@@ -1,14 +1,5 @@
-from ..core import FileSystemObserver
-
-# --- Instances ---------------------
-from ..core.events import Event
-
-# --- Base Class --------------------
-from .watcher import Watcher
-
 import json
-
-from typing import Callable
+from .watcher import Watcher
 
 
 class JSONWatcher(Watcher):
