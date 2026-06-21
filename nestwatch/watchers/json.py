@@ -1,8 +1,10 @@
 import json
+import aiofiles
 from .watcher import Watcher
 
 
 class JSONWatcher(Watcher):
-    def _serialize(self):
-        with open(self.file_path, "r") as f:
-            return json.load(f)
+    async def _serialize(self):
+        async with aiofiles.open(self.file_path, "r") as f:
+            content = await f.read()
+            return json.loads(content)
