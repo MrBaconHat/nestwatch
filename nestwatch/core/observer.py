@@ -17,6 +17,10 @@ class FileSystemObserver(FileSystemEventHandler):
 
         self.last_called = 0
 
+    def _run_thread_loop(self):
+        future = asyncio.run_coroutine_threadsafe(self.callback(), loop=self.loop)
+        future.add_done_callback(lambda f: f.exception())
+
     def _handle(self, event):
         if time.time() - self.last_called < 0.2:
             return
@@ -26,7 +30,7 @@ class FileSystemObserver(FileSystemEventHandler):
             return
             
         if Path(event.src_path) == self.file_path:
-            asyncio.run_coroutine_threadsafe(self.callback(), loop=self.loop)
+            self._run_thread_loop()
 
     def on_modified(self, event):
         self._handle(event)
@@ -35,13 +39,17 @@ class FileSystemObserver(FileSystemEventHandler):
         self._handle(event)
 
     def on_moved(self, event):
+        if time.time() - self.last_called < 0.2:
+            return
+        self.last_called = time.time()
+        
         if event.is_directory:
             return
 
         if Path(event.dest_path) != self.file_path:
             return
 
-        asyncio.run_coroutine_threadsafe(self.callback(), loop=self.loop)
+        self._run_thread_loop()
 
     async def start(self):
         self.loop = asyncio.get_running_loop()
@@ -50,3 +58,4 @@ class FileSystemObserver(FileSystemEventHandler):
 
     async def stop(self):
         self.observer.stop()
+        self.observer.join()
