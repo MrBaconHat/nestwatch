@@ -15,7 +15,8 @@ authors = [
 ]
 
 dependencies = [
-  "watchdog>=6.0.0"
+  "watchdog>=6.0.0",
+  "aiofiles>=25.1.0"
 ]
 
 keywords = [
