@@ -15,16 +15,15 @@ class Watcher:
         self.callback: Callable = None
         self.data = None
 
-    def serizalize(self):
-        print(
+    def _serialize(self):
+        raise NotImplementedError(
             f"Serialize for {self.file_path} is not implemented yet."
             f"Please implement the `serialize` method in the {self.__class__.__name__} class."
         )
-        return {}
 
     async def _on_modified(self):
         old = self.data or {}
-        new = self.serizalize()
+        new = self._serialize()
 
         added, removed, changed = self._diff(old, new)
         self.data = new
@@ -85,8 +84,7 @@ class Watcher:
         """
 
         # Up-to-date the cache before starting
-        with open(self.file_path, "r") as f:
-            self.data = json.load(f)
+        self.data = self._serialize()
 
         await self.observer.start()
 
