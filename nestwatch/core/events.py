@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class Event:
     def __init__(self, added, removed, changed):
         self.added = added
@@ -13,6 +15,16 @@ class Event:
         self.__raw_old = None
         self.__raw_new = None
 
+    def _set_nested(self, data, path, value):
+        keys = path.split(".")
+
+        current = data
+
+        for key in keys[:-1]:
+            current = current.setdefault(key, {})
+
+        current[keys[-1]] = value
+
     @property
     def has_changed(self):
         return bool(self.added or self.removed or self.changed)
@@ -23,25 +35,13 @@ class Event:
             return self.__raw_old
             
         old_data = {}
-        changed = self.changed
-        for key, value in changed.items():
-            if "." in key:
-                keys = key.split(".")
-                keys_count = len(keys)
-                last_key = keys[-1]
-                
-                # exclude the last key from keys before running it through the loop
-                keys = keys[:-1]
-                
-                for k in keys:
-                    if k not in old_data:
-                        old_data[k] = {}
 
-                    if len(keys) == keys_count:
-                        old_data[k][last_key] = value["old"]
-
-            else:
-                old_data[key] = value["old"]
+        for key, value in self.changed.items():
+            self._set_nested(
+                old_data,
+                key,
+                value["old"]
+            )
 
         self.__raw_old = old_data
         return old_data
@@ -51,26 +51,21 @@ class Event:
         if self.__raw_new is not None:
             return self.__raw_new
 
-        new_data = {}
-        added = self.added
-        
-        for key, value in added.items():
-            if "." in key:
-                keys = key.split(".")
-                keys_count = len(keys)
-                last_key = keys[-1]
-                # exclude the last key from keys before running it through the loop
-                keys = keys[:-1]
+        new_data = deepcopy(self.old)
 
-                for k in keys:
-                    if k not in new_data:
-                        new_data[k] = {}
+        for key, value in self.added.items():
+            self._set_nested(
+                new_data,
+                key,
+                value
+            )
 
-                    if len(keys) == keys_count:
-                        new_data[k][last_key] = value
-
-            else:
-                new_data[key] = value
+        for key, value in self.changed.items():
+            self._set_nested(
+                new_data,
+                key,
+                value["new"]
+            )
 
         self.__raw_new = new_data
         return new_data
