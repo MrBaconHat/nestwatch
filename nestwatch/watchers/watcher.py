@@ -43,11 +43,6 @@ class Watcher:
 
         added, removed, changed = self._diff(old, new)
         self.data = new
-        print(
-            f"nest added: {added}",
-            f"nest removed: {removed}",
-            f"nest changed: {changed}"
-        )
 
         if callable(self.callback):
             await self.callback(
@@ -56,6 +51,22 @@ class Watcher:
                     removed,
                     changed,
                 ))
+
+    def _flatten(self, data, path=None):
+        result = {}
+
+        for key, value in data.items():
+            current_path = f"{path}.{key}" if path else key
+
+            if isinstance(value, dict):
+                result.update(
+                    self._flatten(value, current_path)
+                )
+
+            else:
+                result[current_path] = value
+
+        return result
 
     def _diff(self, old, new, path=None):
         added = {}
@@ -70,10 +81,16 @@ class Watcher:
             current_path = f"{path}.{key}" if path else key
 
             if key not in old:
-                added[current_path] = new[key]
+                added.update(
+                    self._flatten(
+                        {key: new[key]}, path)
+                )
 
             elif key not in new:
-                removed[current_path] = old[key]
+                removed.update(
+                    self._flatten(
+                        {key: old[key]}, path)
+                )
 
             elif isinstance(old[key], dict) and isinstance(new[key], dict):
                 added_, removed_, changed_ = self._diff(old[key], new[key], current_path)
