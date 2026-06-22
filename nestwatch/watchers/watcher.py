@@ -122,7 +122,6 @@ class Watcher:
         """
         Starts the watcher.
         """
-
         # Up-to-date the cache before starting
         self.data = await self._call_serialize()
 
