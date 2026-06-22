@@ -1,5 +1,11 @@
 # NestWatch
 
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+
+![License](https://img.shields.io/badge/license-MIT-green)
+
+![PyPI](https://img.shields.io/pypi/v/nestwatch)
+
 **NestWatch** is a Python package that allows applications to react to **meaningful file changes** instead of raw filesystem events.
 
 Rather than repeatedly polling files and risking cache desynchronization, NestWatch instantly notifies your application whenever a file changes and provides both its previous and new state.
@@ -11,7 +17,7 @@ Many applications update caches using polling tasks.
 ```python
 @tasks.loop(minutes=1)
 async def update_cache():
-    ...
+        ...
 ```
 
 While this works, it introduces a delay between when data changes and when applications become aware of those changes.
@@ -64,15 +70,15 @@ class ConfigCache:
 
     async def update_cache(self, event):
 
+        # Affected changes only
         print(event.added)
-
         print(event.removed)
-
         print(event.changed)
 
-        print(event.old_state)
-
-        print(event.new_state)
+        # Reconstructed views)
+        print(event.old)
+        print(event.new)
+        print(event.updated)
 
     async def startup(self):
 
@@ -86,11 +92,12 @@ NestWatch emits an `Event` object containing:
 
 | Property | Description |
 |----------|-------------|
-| `event.added` | Newly added keys |
-| `event.removed` | Removed keys |
-| `event.changed` | Modified values |
-| `event.old_state` | Old state in dictionary |
-| `event.new_state` | New state in dictionary |
+| `event.added` | Keys that were added (dot-path → value) |
+| `event.removed` | Keys that were removed (dot-path → old value) |
+| `event.changed` | Keys that were modified (old + new) |
+| `event.old` | Partial reconstruction of only affected old values |
+| `event.new` | Partial reconstruction of only affected new values |
+| `event.updated` | Final state after applying the event to the old data |
 
 ## Event Examples
 
@@ -98,13 +105,13 @@ Suppose this file:
 
 ```json
 {
-  "BOT_STATUS": {
-    "presence": "online",
-    "activity": {
-      "type": "playing",
-      "name": "Roblox"
+    "BOT_STATUS": {
+        "presence": "online",
+        "activity": {
+            "type": "playing",
+            "name": "Roblox"
+        }
     }
-  }
 }
 ```
 
@@ -112,14 +119,13 @@ becomes:
 
 ```json
 {
-  "BOT_STATUS": {
-    "presence": "idle",
-    "custom": "Watching NestWatch 👀"
-  },
-
-  "API": {
-    "enabled": true
-  }
+    "BOT_STATUS": {
+        "presence": "idle",
+        "custom": "Watching NestWatch 👀"
+    },
+    "API": {
+        "enabled": true
+    }
 }
 ```
 
@@ -129,7 +135,7 @@ Then:
 
 ```python
 {
-    "BOT_STATUS.custom": "Watching NestWatch 👀"
+    "BOT_STATUS.custom": "Watching NestWatch 👀",
     "API.enabled": True
 }
 ```
@@ -147,37 +153,57 @@ Then:
 
 ```python
 {
-  "BOT_STATUS.presence": {
-    "old": "online",
-    "new": "idle"
-  }
+    "BOT_STATUS.presence": {
+        "old": "online",
+        "new": "idle"
+    }
 }
 ```
 
-### `event.old_state`
+### `event.old`
 
 ```python
 {
-  "BOT_STATUS": {
-    "presence": "online"
-  }
+    "BOT_STATUS": {
+        "presence": "online",
+        "activity": {
+            "type": "playing",
+            "name": "Roblox"
+        }
+    }
 }
 ```
 
-### `event.new_state`
+### `event.new`
 
 ```python
 {
-  "BOT_STATUS": {
-    "presence": "idle",
-    "custom": "Watching NestWatch 👀"
-  },
-
-  "API": {
-    "enabled": true
-  }
+    "BOT_STATUS": {
+        "presence": "idle",
+        "custom": "Watching NestWatch 👀"
+    },
+    
+    "API": {
+        "enabled": True
+    }
 }
 ```
+
+### `event.updated`
+
+```python
+{
+    "BOT_STATUS": {
+        "presence": "idle",
+        "custom": "Watching NestWatch 👀"
+    },
+    "API": {
+        "enabled": True
+    }
+}
+```
+
+**IMPORTANT NOTE:** “These are partial reconstructions of only affected regions, not full file snapshots.”
 
 ---
 
@@ -198,6 +224,22 @@ class MyCustomWatcher(Watcher):
         return my_language.load(
             self.file_path
         )
+```
+
+The **Watcher** class supports asynchronous serializers as well.
+
+This allows you to perform asynchronous file reads before NestWatch processes the data.
+
+```python
+import aiofiles
+from nestwatch.watchers import Watcher
+
+class MyCustomWatcher(Watcher):
+
+    async def _serialize(self):
+        async with aiofiles.open(self.file_path) as f:
+            content = await f.read()
+            return my_language.load(content)
 ```
 
 That's it.
@@ -234,3 +276,12 @@ Traditional file watchers answer:
 NestWatch answers:
 
 «"What changed inside the file?"»
+
+---
+
+# NestWatch's Dependency
+
+| Package | Version | Usage |
+|---------|---------|-------|
+| `watchdog` | `>=6.0.0` | Listens for file changes |
+| `aiofiles` | `>=25.1.0` | For reading files in async for internal asynchronous serializers.
