@@ -77,19 +77,11 @@ class Watcher:
                 changed.update(changed_)
 
             elif isinstance(old[key], list) and isinstance(new[key], list):
-                if len(old[key]) != len(new[key]):
+                if (
+                    len(old[key]) != len(new[key])
+                    or old[key] != new[key]
+                ):
                     changed[current_path] = {"old": old[key], "new": new[key]}
-
-                else:
-                    for i, (old_item, new_item) in enumerate(zip(old[key], new[key])):
-                        if old_item != new_item:
-                            changed[f"{current_path}[{i}]"] = {"old": old_item, "new": new_item}
-
-            elif old[key] != new[key]:
-                changed[current_path] = {
-                    "old": old[key],
-                    "new": new[key]
-                }
 
 
         return added, removed, changed
