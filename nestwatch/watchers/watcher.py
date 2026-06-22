@@ -50,8 +50,6 @@ class Watcher:
                     added,
                     removed,
                     changed,
-                    old,
-                    new
                 ))
 
     def _diff(self, old, new, path=None):
