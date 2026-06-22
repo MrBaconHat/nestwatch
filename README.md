@@ -89,8 +89,8 @@ NestWatch emits an `Event` object containing:
 | `event.added` | Newly added keys |
 | `event.removed` | Removed keys |
 | `event.changed` | Modified values |
-| `event.old_state` | Previous file state |
-| `event.new_state` | Updated file state |
+| `event.old_state` | Old state in dictionary |
+| `event.new_state` | New state in dictionary |
 
 ## Event Examples
 
@@ -99,7 +99,11 @@ Suppose this file:
 ```json
 {
   "BOT_STATUS": {
-    "presence": "online"
+    "presence": "online",
+    "activity": {
+      "type": "playing",
+      "name": "Roblox"
+    }
   }
 }
 ```
@@ -133,7 +137,10 @@ Then:
 ### `event.removed`
 
 ```python
-{}
+{
+    "BOT_STATUS.activity.type": "playing",
+    "BOT_STATUS.activity.name": "Roblox"
+}
 ```
 
 ### `event.changed`

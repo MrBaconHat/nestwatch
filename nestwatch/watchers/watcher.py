@@ -43,6 +43,11 @@ class Watcher:
 
         added, removed, changed = self._diff(old, new)
         self.data = new
+        print(
+            f"nest added: {added}",
+            f"nest removed: {removed}",
+            f"nest changed: {changed}"
+        )
 
         if callable(self.callback):
             await self.callback(
@@ -82,6 +87,9 @@ class Watcher:
                     or old[key] != new[key]
                 ):
                     changed[current_path] = {"old": old[key], "new": new[key]}
+
+            elif old[key] != new[key]:
+                changed[current_path] = {"old": old[key], "new": new[key]}
 
 
         return added, removed, changed
