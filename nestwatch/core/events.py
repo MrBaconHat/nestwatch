@@ -1,13 +1,14 @@
 from copy import deepcopy
 
 class Event:
-    def __init__(self, added, removed, changed):
+    def __init__(self, added, removed, changed, updated):
         """
         Represents a change event in a nested dictionary.
         """
-        self.added = added
-        self.removed = removed
-        self.changed = changed
+        self.__added = added
+        self.__removed = removed
+        self.__changed = changed
+        self.__updated_state = updated
 
         self.__raw_old = None
         self.__raw_new = None
@@ -59,7 +60,34 @@ class Event:
         """
         Returns True if the event has any changes.
         """
-        return bool(self.added or self.removed or self.changed)
+        return bool(self.__added or self.__removed or self.__changed)
+
+    @property
+    def added(self):
+        """
+        Returns the added keys and their values.
+
+        Example: {"a.b.c": 1}
+        """
+        return self.__added
+
+    @property
+    def removed(self):
+        """
+        Returns the removed keys and their values.
+
+        Example: {"a.b.c": 1}
+        """
+        return self.__removed
+
+    @property
+    def changed(self):
+        """
+        Returns the changed keys and their old and new values.
+
+        Example: {"a.b.c": {"old": 1, "new": 2}}
+        """
+        return self.__changed
 
     @property
     def old(self):
@@ -132,17 +160,10 @@ class Event:
         return new_data
 
     @property
-    def updated(self):
+    def updated_state(self):
         """
-        Returns a reconstructed state after applying the event.
-
-        This is created by deep-merging:
-        - old (base structure)
-        - new (changes applied)
+        Returns the updated state after applying the event.
 
         Useful for getting a snapshot of the affected final state.
         """
-        return self._deep_merge(
-            self.old,
-            self.new
-        )
+        return self.__updated_state
