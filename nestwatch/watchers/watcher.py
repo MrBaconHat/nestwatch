@@ -9,6 +9,8 @@ import traceback
 
 from typing import Callable
 
+from copy import deepcopy
+
 
 class Watcher:
     def __init__(self, file_path):
@@ -44,12 +46,21 @@ class Watcher:
         added, removed, changed = self._diff(old, new)
         self.data = new
 
+        # Convert to dict
+        updated = self._build_updated_state(
+            new,
+            added,
+            removed,
+            changed
+        )
+
         if callable(self.callback):
             await self.callback(
                 Event(
                     added,
                     removed,
                     changed,
+                    updated
                 ))
 
     def _flatten(self, data, path=None):
@@ -67,6 +78,30 @@ class Watcher:
                 result[current_path] = value
 
         return result
+
+    def _build_updated_state(self, new, added, removed, changed):
+
+        updated = {}
+
+        roots = set()
+
+        for path in (
+            list(added)
+            + list(removed)
+            + list(changed)
+        ):
+
+            root = path.split(".")[0]
+            roots.add(root)
+
+        for root in roots:
+            if root in new:
+                updated[root] = deepcopy(
+                    new[root]
+                )
+
+        return updated
+        
 
     def _diff(self, old, new, path=None):
         added = {}
