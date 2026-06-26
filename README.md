@@ -97,7 +97,7 @@ NestWatch emits an `Event` object containing:
 | `event.changed` | Keys that were modified (old + new) |
 | `event.old` | Partial reconstruction of only affected old values |
 | `event.new` | Partial reconstruction of only affected new values |
-| `event.updated` | Final state after applying the event to the old data |
+| `event.updated_state` | Final state after applying the event to the old data |
 
 ## Event Examples
 
@@ -189,7 +189,7 @@ Then:
 }
 ```
 
-### `event.updated`
+### `event.updated_state`
 
 ```python
 {
@@ -271,11 +271,11 @@ NestWatch works especially well for:
 
 Traditional file watchers answer:
 
-«"Did the file change?"»
+> "Did the file change?"
 
 NestWatch answers:
 
-«"What changed inside the file?"»
+> "What changed inside the file?"
 
 ---
 
