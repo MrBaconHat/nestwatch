@@ -1,6 +1,6 @@
 [project]
 name = "nestwatch"
-version = "0.0.8"
+version = "0.0.9"
 
 description = "Reactive file state management for Python."
 
